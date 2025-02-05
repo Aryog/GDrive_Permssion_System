@@ -3,9 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun run --watch backend/src/index.ts",
+    "dev": "bun run --watch backend/index.ts",
     "generate": "drizzle-kit generate:pg",
-    "migrate": "bun run backend/src/db/migrate.ts"
+    "migrate": "bun run backend/db/migrate.ts"
   },
   "dependencies": {
     "@kinde-oss/kinde-auth-nextjs": "^1.0.0",
@@ -13,6 +13,7 @@
     "@types/pg": "^8.10.9",
     "drizzle-orm": "^0.29.0",
     "hono": "^4.0.0",
+    "pg": "^8.13.1",
     "postgres": "^3.4.0",
     "zod": "^3.22.0"
   },
