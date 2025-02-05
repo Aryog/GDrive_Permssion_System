@@ -40,17 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = async () => {
         try {
-            const res = await fetch(`${backendUrl}/api/auth/logout`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            if (res.ok) {
-                setUser(null)
-                window.location.href = '/'
-            }
+            window.location.href = `${backendUrl}/api/auth/logout`
         } catch (error) {
             console.error('Logout failed:', error)
         }

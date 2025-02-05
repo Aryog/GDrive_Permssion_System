@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/lib/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { User2 } from "lucide-react"
 
 export function UserNav() {
     const { user, logout } = useAuth()
@@ -22,8 +23,9 @@ export function UserNav() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.picture} alt={user.email} />
-                        <AvatarFallback>{user.email[0].toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>
+                            <User2 className="h-4 w-4 text-gray-600" />
+                        </AvatarFallback>
                     </Avatar>
                 </Button>
             </DropdownMenuTrigger>
