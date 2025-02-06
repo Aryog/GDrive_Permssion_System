@@ -8,7 +8,7 @@ export default function App() {
       <div className="flex min-h-screen flex-col">
         <header className="border-b">
           <div className="container flex h-14 items-center justify-between">
-            <div className="font-semibold">Your Drive</div>
+            <div className="font-semibold">e-Patra</div>
             <div className="flex items-center gap-4">
               <AuthButton />
               <UserNav />

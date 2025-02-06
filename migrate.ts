@@ -1,24 +1,10 @@
+
+// Make sure to install the 'postgres' package
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import postgres from 'postgres';
-import { config } from './backend/src/config';
 
-const runMigrate = async () => {
-    const sql = postgres(config.database.url, { max: 1 });
-    const db = drizzle(sql);
-
-    console.log('⏳ Running migrations...');
-
-    const start = Date.now();
-    await migrate(db, { migrationsFolder: 'drizzle' });
-    const end = Date.now();
-
-    console.log(`✅ Migrations completed in ${end - start}ms`);
-    process.exit(0);
-};
-
-runMigrate().catch((err) => {
-    console.error('❌ Migration failed');
-    console.error(err);
-    process.exit(1);
-}); 
+console.log(process.env.DATABASE_URL);
+const migrationClient = postgres(process.env.DATABASE_URL!, { max: 1 });
+migrate(drizzle(migrationClient), { migrationsFolder: "./drizzle" })
+console.log("Migration complete")
