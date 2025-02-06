@@ -1,6 +1,7 @@
 import { AuthProvider } from "@/components/auth/auth-provider"
 import { AuthButton } from "@/components/auth/auth-button"
 import { UserNav } from "@/components/auth/user-nav"
+import { FileUpload } from "@/components/file-upload"
 
 export default function App() {
   return (
@@ -17,7 +18,12 @@ export default function App() {
         </header>
         <main className="flex-1">
           <div className="container py-6">
-            {/* Your app content */}
+            <FileUpload
+              onUploadComplete={(file) => {
+                console.log("File uploaded:", file);
+                // Handle the uploaded file (e.g., refresh file list)
+              }}
+            />
           </div>
         </main>
       </div>

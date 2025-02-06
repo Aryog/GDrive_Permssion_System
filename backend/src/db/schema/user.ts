@@ -3,7 +3,7 @@ import { config } from "../../config";
 
 export const users = pgTable(config.database.tables.USERS, {
     id: uuid("id").defaultRandom().primaryKey(),
-    kindeId: varchar("kinde_id").notNull().unique(),
+    kindeId: varchar("kinde_id", { length: 256 }).notNull().unique(),
     email: varchar("email").notNull().unique(),
     firstName: varchar("first_name"),
     lastName: varchar("last_name"),
