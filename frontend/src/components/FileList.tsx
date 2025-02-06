@@ -153,7 +153,7 @@ const FileList = () => {
                                 </span>
                             )}
                             <span className="text-xs text-gray-500">
-                                {formatTimestamp(item.updatedAt)}
+                                {item.type === 'file' && formatTimestamp(item.updatedAt)}
                             </span>
                         </div>
                     </button>
