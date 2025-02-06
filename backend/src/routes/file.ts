@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "../db";
 import { files } from "../db/schema/file";
 import { getUser } from "../../kinde";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { generateUploadUrl, generateReadUrl } from "../services/azure-storage";
 import { users } from "../db/schema/user";
 
@@ -81,33 +81,13 @@ export const fileRoute = new Hono()
                 }, 404);
             }
 
-            // Create or verify user's root folder exists
-            const userRootPath = `/${user.id}`;
-            const userRoot = await db.query.files.findFirst({
-                where: and(
-                    eq(files.path, userRootPath),
-                    eq(files.type, "folder"),
-                    eq(files.ownerId, user.id)
-                )
-            });
-
-            if (!userRoot) {
-                await db.insert(files).values({
-                    name: user.id,
-                    type: "folder",
-                    path: userRootPath,
-                    ownerId: user.id,
-                });
-            }
-
-            // Adjust the path to be under user's root folder
-            const originalPath = parsed.path;
-            parsed.path = originalPath.startsWith('/')
-                ? `${userRootPath}${originalPath}`
-                : `${userRootPath}/${originalPath}`;
-
-            // For files, handle duplicate names by appending a counter
+            // Only proceed with file creation, skip folder creation
             if (parsed.type === "file") {
+                // Adjust the path to include userId
+                const virtualPath = `${user.id}/${parsed.path}`.replace(/\/+/g, '/');
+                parsed.path = virtualPath;
+
+                // Handle duplicate names by appending a counter
                 let finalName = parsed.name;
                 let counter = 1;
                 let nameExists = true;
@@ -132,53 +112,29 @@ export const fileRoute = new Hono()
                     }
                 }
                 parsed.name = finalName;
-            }
 
-            // For folders, ensure the entire path exists
-            if (parsed.type === "folder") {
-                const pathParts = parsed.path.split('/').filter(Boolean);
-                let currentPath = "";
-
-                // Create each level of the folder structure if it doesn't exist
-                for (const part of pathParts) {
-                    currentPath += `/${part}`;
-                    const existingFolder = await db.query.files.findFirst({
-                        where: and(
-                            eq(files.path, currentPath),
-                            eq(files.type, "folder"),
-                            eq(files.ownerId, user.id)
-                        )
-                    });
-
-                    if (!existingFolder) {
-                        await db.insert(files).values({
-                            name: part,
-                            type: "folder",
-                            path: currentPath,
-                            ownerId: user.id,
-                        });
-                    }
+                // Generate read URL if blobName exists
+                let fileUrl = undefined;
+                if (parsed.blobName) {
+                    fileUrl = await generateReadUrl(parsed.blobName);
                 }
+
+                // Create file record
+                const [file] = await db.insert(files).values({
+                    ...parsed,
+                    ownerId: user.id,
+                    fileUrl,
+                }).returning();
+
+                if (!file) {
+                    throw new Error("Failed to create file record");
+                }
+
+                return c.json({ ...file, fileUrl });
+            } else {
+                // If it's a folder request, just return success without creating anything
+                return c.json({ success: true });
             }
-
-            // If it's a file, generate a read URL
-            let fileUrl = undefined;
-            if (parsed.type === "file" && parsed.blobName) {
-                fileUrl = await generateReadUrl(parsed.blobName);
-            }
-
-            const [file] = await db.insert(files).values({
-                ...parsed,
-                ownerId: user.id,
-                blobName: parsed.type === "file" ? parsed.blobName : undefined,
-                fileUrl: parsed.type === "file" ? fileUrl : undefined,
-            }).returning();
-
-            if (!file) {
-                throw new Error("Failed to create file record");
-            }
-
-            return c.json({ ...file, fileUrl });
         } catch (error) {
             console.error("File creation error:", error);
             return c.json({
@@ -199,7 +155,7 @@ export const fileRoute = new Hono()
     })
     // List files in folder
     .get("/folder/:folderId", async (c) => {
-        const folderId = c.req.param("folderId");
+        const virtualPath = c.req.param("folderId");
         const user = await db.query.users.findFirst({
             where: eq(users.kindeId, c.var.user.id)
         });
@@ -211,22 +167,51 @@ export const fileRoute = new Hono()
             }, 404);
         }
 
-        // If no folderId is provided or it's "root", show the user's root folder contents
-        const whereClause = folderId === "root"
-            ? and(
-                eq(files.path, `/${user.id}`),
-                eq(files.ownerId, user.id)
-            )
-            : and(
-                eq(files.parentId, folderId),
-                eq(files.ownerId, user.id)
-            );
+        // Construct the path prefix for the current folder
+        const pathPrefix = virtualPath === "root"
+            ? `${user.id}/`
+            : `${user.id}/${virtualPath}/`;
 
-        const items = await db.query.files.findMany({
-            where: whereClause
+        // Get all files that have this path prefix
+        const dbFiles: typeof files.$inferSelect[] = await db.query.files.findMany({
+            where: and(
+                eq(files.ownerId, user.id),
+                eq(files.type, "file"),
+                sql`${files.path} LIKE ${pathPrefix + '%'}`
+            ),
+            orderBy: sql`name ASC`
         });
 
-        return c.json(items);
+        // Extract virtual folders from file paths
+        const virtualFolders = new Set<string>();
+        const currentLevelFiles: typeof files.$inferSelect[] = [];
+
+        dbFiles.forEach(file => {
+            // Remove the user ID and current path prefix from the file path
+            const relativePath = file.path.slice(pathPrefix.length);
+
+            if (relativePath.includes('/')) {
+                // This file is in a subfolder
+                const firstFolder = relativePath.split('/')[0];
+                virtualFolders.add(firstFolder);
+            } else {
+                // This file is in the current folder
+                currentLevelFiles.push(file);
+            }
+        });
+
+        // Construct response with both folders and files
+        const response = {
+            folders: Array.from(virtualFolders).map(folderName => ({
+                id: `${virtualPath === "root" ? "" : virtualPath + "/"}${folderName}`,
+                name: folderName,
+                type: "folder",
+                path: `${pathPrefix}${folderName}`
+            })),
+            files: currentLevelFiles
+        };
+
+        return c.json(response);
     })
     // Update file/folder
     .patch("/:id", async (c) => {
