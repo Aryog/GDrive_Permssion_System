@@ -1,10 +1,9 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { config } from "../../config";
 import { users } from "./user";
-import { v4 as uuidv4 } from 'uuid';
 
 export const files = pgTable(config.database.tables.FILES, {
-    id: uuid("id").default(uuidv4()).primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     name: text("name").notNull(),
     type: text("type").notNull(), // 'file' or 'folder'
     mimeType: text("mime_type"),

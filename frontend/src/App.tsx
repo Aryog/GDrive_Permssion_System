@@ -20,8 +20,9 @@ export default function App() {
           <div className="container py-6">
             <FileUpload
               onUploadComplete={(file) => {
-                console.log("File uploaded:", file);
-                // Handle the uploaded file (e.g., refresh file list)
+                console.log("Uploaded:", file);
+                // Handle the uploaded file/folder
+                // You might want to refresh your file list here
               }}
             />
           </div>

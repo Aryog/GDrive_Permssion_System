@@ -15,10 +15,19 @@ const blobServiceClient = new BlobServiceClient(
     sharedKeyCredential
 );
 
-export async function generateUploadUrl(fileName: string, contentType: string): Promise<{ url: string; blobName: string }> {
+export async function generateUploadUrl(userId: string, fileName: string, contentType: string, virtualPath: string = ''): Promise<{ url: string; blobName: string }> {
     const containerClient = blobServiceClient.getContainerClient(containerName);
-    const blobName = `${Date.now()}-${uuidv4()}-${fileName}`;
-    const blobClient = containerClient.getBlobClient(blobName);
+
+    // Create a blob path that mirrors the virtual directory structure
+    // Format: userId/virtualPath/timestamp-uuid-filename
+    const timestamp = Date.now();
+    const uniqueId = uuidv4();
+    const sanitizedPath = virtualPath.replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
+    const blobPath = sanitizedPath
+        ? `${userId}/${sanitizedPath}/${timestamp}-${uniqueId}-${fileName}`
+        : `${userId}/${timestamp}-${uniqueId}-${fileName}`;
+
+    const blobClient = containerClient.getBlobClient(blobPath);
 
     const startsOn = new Date();
     const expiresOn = new Date(startsOn);
@@ -30,7 +39,7 @@ export async function generateUploadUrl(fileName: string, contentType: string): 
 
     const sasToken = generateBlobSASQueryParameters({
         containerName,
-        blobName,
+        blobName: blobPath,
         permissions,
         startsOn,
         expiresOn,
@@ -39,7 +48,7 @@ export async function generateUploadUrl(fileName: string, contentType: string): 
 
     return {
         url: `${blobClient.url}?${sasToken}`,
-        blobName,
+        blobName: blobPath,
     };
 }
 
