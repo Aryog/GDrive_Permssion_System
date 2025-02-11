@@ -1,5 +1,7 @@
 import { pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { config } from "../../config";
+import { relations } from 'drizzle-orm';
+import { userRoles } from './userRole';
 
 export const users = pgTable(config.database.tables.USERS, {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -11,3 +13,7 @@ export const users = pgTable(config.database.tables.USERS, {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const usersRelations = relations(users, ({ many }) => ({
+    userRoles: many(userRoles, { relationName: 'user' })
+}));

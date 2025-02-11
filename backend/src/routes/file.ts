@@ -6,6 +6,7 @@ import { getUser } from "../../kinde";
 import { eq, and, sql } from "drizzle-orm";
 import { generateUploadUrl, generateReadUrl } from "../services/azure-storage";
 import { users } from "../db/schema/user";
+import { checkRole } from "../middleware/check-role";
 
 const fileSchema = z.object({
     name: z.string(),
@@ -27,7 +28,7 @@ const uploadUrlSchema = z.object({
 export const fileRoute = new Hono()
     .use("/*", getUser)
     // Get upload URL
-    .post("/upload-url", async (c) => {
+    .post("/upload-url", checkRole(['admin', 'teacher']), async (c) => {
         try {
             const data = await c.req.json();
             const parsed = uploadUrlSchema.parse(data);
@@ -64,7 +65,7 @@ export const fileRoute = new Hono()
         }
     })
     // Create file/folder
-    .post("/", async (c) => {
+    .post("/", checkRole(['admin', 'teacher']), async (c) => {
         try {
             const data = await c.req.json();
             const parsed = fileSchema.parse(data);

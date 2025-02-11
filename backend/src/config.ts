@@ -1,8 +1,7 @@
 export enum PermissionEnum {
-    OWNER = 'owner',
-    EDITOR = 'editor',
-    COMMENTER = 'commenter',
-    VIEWER = 'viewer',
+    ADMIN = 'admin',
+    TEACHER = 'teacher',
+    STUDENT = 'student',
     NONE = 'none'
 }
 
@@ -16,10 +15,7 @@ export const config = {
             ROLES: 'roles',
             USER_ROLES: 'user_roles',
             ROLE_PERMISSIONS: 'role_permissions',
-            FILE_PERMISSIONS: 'file_permissions',
-            GROUP_PERMISSIONS: 'group_permissions',
-            GROUPS: 'groups',
-            GROUP_MEMBERS: 'group_members'
+            FILE_PERMISSIONS: 'file_permissions'
         }
     },
     app: {
@@ -27,31 +23,26 @@ export const config = {
         jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
     },
     permissions: {
-        file: {
-            OWNER: PermissionEnum.OWNER,
-            EDITOR: PermissionEnum.EDITOR,
-            COMMENTER: PermissionEnum.COMMENTER,
-            VIEWER: PermissionEnum.VIEWER,
-            NONE: PermissionEnum.NONE
-        },
-        FOLDER: {
-            CREATE: 'folder:create',
-            READ: 'folder:read',
-            UPDATE: 'folder:update',
-            DELETE: 'folder:delete',
-            LIST: 'folder:list',
-        },
         ADMIN: {
             MANAGE_USERS: 'admin:manage_users',
             MANAGE_ROLES: 'admin:manage_roles',
-            MANAGE_PERMISSIONS: 'admin:manage_permissions',
+            ASSIGN_ROLES: 'admin:assign_roles',
+            MANAGE_CONTENT: 'admin:manage_content',
+        },
+        TEACHER: {
+            UPLOAD_CONTENT: 'teacher:upload_content',
+            EDIT_CONTENT: 'teacher:edit_content',
+            DELETE_CONTENT: 'teacher:delete_content',
+            VIEW_CONTENT: 'teacher:view_content',
+        },
+        STUDENT: {
+            VIEW_CONTENT: 'student:view_content',
         }
     },
     roles: {
         ADMIN: 'admin',
-        USER: 'user',
-        VIEWER: 'viewer',
-        EDITOR: 'editor',
+        TEACHER: 'teacher',
+        STUDENT: 'student',
     }
 } as const;
 
