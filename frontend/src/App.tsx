@@ -1,6 +1,8 @@
 import { AuthProvider } from "@/components/auth/auth-provider"
+import { ThemeProvider } from "@/components/theme/theme-provider"
 import { AuthButton } from "@/components/auth/auth-button"
 import { UserNav } from "@/components/auth/user-nav"
+import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { FileUpload } from "@/components/file-upload"
 import FileList from './components/FileList'
 import { useState } from 'react'
@@ -46,45 +48,48 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-50 w-full border-b bg-white">
-            <div className="container flex h-14 items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="font-semibold">e-Patra</div>
+      <ThemeProvider defaultTheme="dark">
+        <AuthProvider>
+          <div className="min-h-screen flex flex-col bg-background">
+            <header className="sticky top-0 z-50 w-full border-b bg-background">
+              <div className="container flex h-14 items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="font-semibold">e-Patra</div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <ThemeToggle />
+                  <AuthButton />
+                  <UserNav />
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <AuthButton />
-                <UserNav />
+            </header>
+
+            <main className="flex-1 flex flex-col">
+              <Routes>
+                {/* Redirect root to /folder/root */}
+                <Route path="/" element={<Navigate to="/folder/root" replace />} />
+
+                {/* Main file list routes */}
+                <Route
+                  path="/folder/:folderId"
+                  element={<Layout shouldRefresh={shouldRefresh} />}
+                />
+
+                {/* Catch-all redirect */}
+                <Route path="*" element={<Navigate to="/folder/root" replace />} />
+              </Routes>
+            </main>
+
+            <footer className="mt-auto border-t py-4 bg-background">
+              <div className="container flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  © 2025 e-Patra. All rights reserved.
+                </p>
               </div>
-            </div>
-          </header>
-
-          <main className="flex-1">
-            <Routes>
-              {/* Redirect root to /folder/root */}
-              <Route path="/" element={<Navigate to="/folder/root" replace />} />
-
-              {/* Main file list routes */}
-              <Route
-                path="/folder/:folderId"
-                element={<Layout shouldRefresh={shouldRefresh} />}
-              />
-
-              {/* Catch-all redirect */}
-              <Route path="*" element={<Navigate to="/folder/root" replace />} />
-            </Routes>
-          </main>
-
-          <footer className="border-t py-4">
-            <div className="container flex items-center justify-between">
-              <p className="text-sm text-gray-500">
-                © 2025 e-Patra. All rights reserved.
-              </p>
-            </div>
-          </footer>
-        </div>
-      </AuthProvider>
+            </footer>
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }

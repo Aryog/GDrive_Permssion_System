@@ -3,7 +3,6 @@ import { logger } from 'hono/logger'
 import { cors } from 'hono/cors'
 import { fileRoute } from './src/routes/file'
 import { permissionRoute } from './src/routes/permission'
-import { shareRoute } from './src/routes/share'
 import { authRoute } from './src/routes/auth'
 import { roleRoute } from './src/routes/role'
 // import { serveStatic } from 'hono/bun'
@@ -33,7 +32,6 @@ const apiRoutes = app
     .route('/auth', authRoute)
     .route('/files', fileRoute)
     .route('/permissions', permissionRoute)
-    .route('/share', shareRoute)
     .route('/roles', roleRoute)
 
 // app.get("*", serveStatic({ root: "./frontend/dist" }));

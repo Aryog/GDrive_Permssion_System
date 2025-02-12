@@ -11,14 +11,14 @@ const saveUser = createMiddleware(async (c, next) => {
     try {
         const manager = sessionManager(c);
         const isAuthenticated = await kindeClient.isAuthenticated(manager);
-
+        console.log("isAuthenticated", isAuthenticated);
         if (isAuthenticated) {
             const user = await kindeClient.getUserProfile(manager);
             if (user?.id) {
                 const existingUser = await db.query.users.findFirst({
                     where: eq(users.kindeId, user.id)
                 });
-
+                console.log("existingUser", existingUser);
                 if (!existingUser) {
                     await db.insert(users).values({
                         kindeId: user.id,
@@ -47,16 +47,18 @@ export const authRoute = new Hono()
         const registerUrl = await kindeClient.register(sessionManager(c));
         return c.redirect(registerUrl.toString());
     })
-    .get("/callback", saveUser, async (c) => {
+    .get("/callback", async (c) => {
         const url = new URL(c.req.url);
-        await kindeClient.handleRedirectToApp(sessionManager(c), url);
+        const manager = sessionManager(c);
+        // Just handle the redirect and set up the session
+        await kindeClient.handleRedirectToApp(manager, url);
         return c.redirect("/");
     })
     .get("/logout", async (c) => {
         const logoutUrl = await kindeClient.logout(sessionManager(c));
         return c.redirect(logoutUrl.toString());
     })
-    .get("/me", getUser, async (c) => {
+    .get("/me", saveUser, getUser, async (c) => {
         const user = c.var.user
         return c.json({ user });
     });
